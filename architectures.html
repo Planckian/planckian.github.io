@@ -24,6 +24,8 @@
     padding:1vmin 1.6vmin;font-family:"JetBrains Mono",monospace;font-size:max(10px,1.4vmin);cursor:pointer;min-height:36px;
     display:inline-flex;align-items:center}
   .iconbtn:hover{color:var(--txt);border-color:var(--brand)}
+  .iconbtn.pap{border-color:var(--brand);color:var(--brand);font-weight:700}
+  .iconbtn.pap:hover{background:rgba(247,64,58,.12)}
 
   .hero{flex:none;text-align:center;padding:0 4vw}
   h1{font-family:"Space Grotesk",sans-serif;font-weight:600;letter-spacing:-.02em;
@@ -79,12 +81,13 @@
     <span class="div"></span>
     <span class="kicker">Globally controlled quantum processors</span>
     <span class="sp"></span>
+    <a class="iconbtn pap" href="papers.html">▤ the papers · QR codes</a>
     <button class="iconbtn" id="fsBtn">⛶ full screen</button>
   </div>
 
   <div class="hero">
-    <h1>Many many qubits. <em>A handful of wires.</em></h1>
-    <p class="sub">Every superconducting qubit normally wants its own control lines, and that is what stops the technology scaling — not coherence. Drive the whole register with a few shared fields instead and one question decides everything: if every qubit hears the same pulse, what makes them behave differently? There are two good answers, and they are opposites.</p>
+    <h1>A million qubits. <em>A handful of wires.</em></h1>
+    <p class="sub">Every superconducting qubit normally wants its own control lines, and that is what stops the technology scaling — not coherence. Drive the whole register with a few shared fields instead and one question decides everything: if every qubit hears the same pulse, what makes them behave differently? There are two good answers, and they are opposites. <a href="papers.html" style="color:var(--brand);font-weight:600">All seven papers, with QR codes →</a></p>
   </div>
 
   <div class="grid">
@@ -194,6 +197,7 @@ addEventListener("keydown",e=>{
   if(e.key==="f"||e.key==="F"){document.getElementById("fsBtn").click();return;}
   if(e.key==="1") location.href="games.html";
   if(e.key==="2") location.href="games-zz.html";
+  if(e.key==="p"||e.key==="P") location.href="papers.html";
 });
 </script>
 </body>
