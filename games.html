@@ -14,12 +14,10 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
     font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
-    user-select:none;touch-action:manipulation;overflow:hidden}
-  @media(max-aspect-ratio:9/11){html,body{overflow-y:auto}}
+    user-select:none;touch-action:manipulation;overflow-x:hidden;overflow-y:auto}
   a{text-decoration:none;color:inherit}
 
-  .page{height:100%;display:flex;flex-direction:column;padding:2.4vmin 3vmin;gap:2vmin}
-  @media(max-aspect-ratio:9/11){.page{height:auto;min-height:100%}}
+  .page{min-height:100vh;display:flex;flex-direction:column;padding:2.4vmin 3vmin;gap:2vmin}
 
   .top{display:flex;align-items:center;gap:2vmin;flex:none}
   .top img{height:3.2vmin;min-height:22px}
@@ -40,17 +38,17 @@
   h1 em{font-style:normal;color:var(--brand)}
   .sub{color:var(--dim);font-size:clamp(13px,2vmin,23px);line-height:1.45;margin:0;max-width:78ch}
 
-  .grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2vmin;min-height:0}
+  .grid{flex:1 1 auto;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:2vmin;align-items:stretch}
   @media(max-aspect-ratio:9/11){.grid{grid-template-columns:1fr;grid-template-rows:none}}
   .card{position:relative;display:grid;grid-template-columns:auto 1fr;gap:2.4vmin;align-items:center;
     background:var(--bg2);border:1px solid var(--line);border-radius:2vmin;padding:2.2vmin 2.6vmin;
-    min-height:0;overflow:hidden;transition:transform .18s,border-color .18s,background .18s;cursor:pointer}
+    transition:transform .18s,border-color .18s,background .18s;cursor:pointer}
   .card:hover,.card:focus-visible{border-color:var(--brand);background:#1a1d2c;transform:translateY(-3px);outline:none}
   .card:active{transform:translateY(-1px) scale(.995)}
   .thumb{width:18vmin;min-width:112px;background:#0f111a;border:1px solid var(--line);
     border-radius:1.4vmin;padding:1vmin}
   @media(max-width:620px){.card{grid-template-columns:1fr}.thumb{width:100%}}
-  .thumb svg{display:block;width:100%;height:auto}
+  .thumb svg{display:block;width:100%;height:auto;max-height:clamp(70px,13vh,140px)}
   .num{font-family:"JetBrains Mono",monospace;font-size:max(9px,1.35vmin);letter-spacing:.22em;
     text-transform:uppercase;color:var(--brand);margin:0 0 .8vmin}
   .card h2{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:clamp(16px,2.75vmin,33px);
@@ -215,7 +213,7 @@
       <div>
         <p class="num">04 · any lattice</p>
         <h2>Matching-layer routing</h2>
-        <p>The general question. Colour any lattice into matchings, route a qubit across it, and find out exactly how many control lines a chip needs.</p>
+        <p>The general question. Colour any lattice into matchings, route a qubit across it, and find out exactly how many control lines a chip needs. After Caravelli <i>et al.</i>, forthcoming.</p>
         <span class="play">Tap to play <span class="arrow">→</span></span>
         <div class="file">graph-routing.html</div>
       </div>
