@@ -9,12 +9,11 @@
   :root{--bg:#0c0d13;--bg2:#141621;--panel:#191c2a;--line:#2a2e42;--line2:#3a3f59;
         --txt:#f2f3f8;--dim:#9aa0b8;--brand:#f7403a;--violet:#a78bfa;--gold:#fbbf24;--green:#34d399;--blue:#60a5fa}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
-    font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;touch-action:manipulation;overflow:hidden}
-  @media(max-aspect-ratio:9/10){html,body{overflow-y:auto}}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--txt);
+    font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;touch-action:manipulation;
+    overflow-x:hidden;overflow-y:auto}
   a{text-decoration:none;color:inherit}
-  .page{height:100%;display:flex;flex-direction:column;padding:2.6vmin 3vmin;gap:2.2vmin}
-  @media(max-aspect-ratio:9/10){.page{height:auto;min-height:100%}}
+  .page{min-height:100vh;display:flex;flex-direction:column;padding:2.6vmin 3vmin;gap:2.2vmin}
 
   .top{display:flex;align-items:center;gap:2vmin;flex:none}
   .top img{height:3.4vmin;min-height:24px}
@@ -28,19 +27,19 @@
 
   .hero{flex:none;text-align:center;padding:0 4vw}
   h1{font-family:"Space Grotesk",sans-serif;font-weight:600;letter-spacing:-.02em;
-    font-size:clamp(26px,5.6vmin,74px);line-height:1.03;margin:0 0 1.4vmin}
+    font-size:clamp(25px,5.1vmin,66px);line-height:1.03;margin:0 0 1.4vmin}
   h1 em{font-style:normal;color:var(--brand)}
-  .sub{color:var(--dim);font-size:clamp(13px,2.1vmin,24px);line-height:1.5;margin:0 auto;max-width:74ch}
+  .sub{color:var(--dim);font-size:clamp(13px,1.95vmin,21px);line-height:1.5;margin:0 auto;max-width:68ch}
 
-  .grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:2.2vmin;min-height:0}
+  .grid{flex:1 1 auto;display:grid;grid-template-columns:1fr 1fr;gap:2.2vmin;align-items:stretch}
   @media(max-aspect-ratio:9/10){.grid{grid-template-columns:1fr}}
   .branch{position:relative;display:flex;flex-direction:column;gap:1.8vmin;
-    background:var(--bg2);border:1px solid var(--line);border-radius:2.2vmin;padding:2.8vmin 3vmin;
-    min-height:0;overflow:hidden;transition:transform .2s,border-color .2s,background .2s;cursor:pointer}
+    background:var(--bg2);border:1px solid var(--line);border-radius:2.2vmin;padding:2.6vmin 3vmin;
+    transition:transform .2s,border-color .2s,background .2s;cursor:pointer}
   .branch:hover,.branch:focus-visible{border-color:var(--brand);background:#1a1d2c;transform:translateY(-4px);outline:none}
   .branch:active{transform:translateY(-2px) scale(.995)}
   .branch .art{background:#0f111a;border:1px solid var(--line);border-radius:1.6vmin;padding:1.6vmin;flex:none}
-  .branch .art svg{display:block;width:100%;height:auto}
+  .branch .art svg{display:block;width:100%;height:auto;max-height:clamp(78px,14vh,148px)}
   .tag{font-family:"JetBrains Mono",monospace;font-size:max(9px,1.35vmin);letter-spacing:.22em;
     text-transform:uppercase;color:var(--brand);margin:0 0 .9vmin}
   .branch h2{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:clamp(19px,3.4vmin,40px);
