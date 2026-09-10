@@ -100,9 +100,24 @@ main {
 .desk-card.fixed { background: var(--fixed-bg); border-color: var(--fixed-ink); }
 .desk-card.pending { opacity: 0.7; }
 
-.desk-occupant { font-size: 0.9rem; }
+.desk-occupant { font-size: 0.9rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .desk-occupant .who { font-weight: 600; }
 .desk-occupant .when { color: var(--muted); }
+
+.half .who { display: inline-flex; align-items: center; gap: 6px; }
+
+.remove-btn {
+  border: none;
+  background: transparent;
+  color: var(--booked);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+.remove-btn:hover { opacity: 1; background: var(--booked-bg); }
 
 .book-btn {
   margin-top: auto;
@@ -223,6 +238,7 @@ footer code { background: var(--border); padding: 1px 5px; border-radius: 4px; }
 }
 .btn.primary { background: var(--accent); color: white; }
 .btn.secondary { background: var(--bg); color: var(--ink); border: 1px solid var(--border); }
+.btn.danger { background: var(--booked); color: white; }
 .modal-error { color: var(--booked); font-size: 0.85rem; min-height: 1em; margin: 4px 0 0; }
 
 @media (prefers-color-scheme: dark) {

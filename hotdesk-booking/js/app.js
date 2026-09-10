@@ -1,5 +1,5 @@
 // ============================================================================
-// Planckian Hot Desk Booking — front end
+// Lukewarm Desk Booking System — front end (for Planckian's office)
 // Data pipe is a Google Form (writes) + published Sheet CSV (reads).
 // See config.js for the endpoints, README.md for setup.
 // ============================================================================
@@ -62,16 +62,24 @@ function addBusinessDays(base, n) {
   return d;
 }
 
+// How many calendar days ahead the picker reaches (two weeks).
+const HORIZON_CALENDAR_DAYS = 14;
+
 // The selectable dates: "today" (who's actually in the office right now),
-// plus the two forward-looking booking targets, business-day-aware
-// (weekends skipped) — so from a Friday, "day after" is Monday.
+// then every business day out to HORIZON_CALENDAR_DAYS ahead (weekends
+// skipped entirely) — so from a Friday, the first forward option is Monday.
 function targetDateOptions() {
   const today = new Date();
-  return [
-    { label: "today", date: today },
-    { label: "day after", date: addBusinessDays(today, 1) },
-    { label: "day after tomorrow", date: addBusinessDays(today, 2) },
-  ];
+  const options = [{ label: "today", date: today }];
+
+  for (let n = 1; ; n++) {
+    const date = addBusinessDays(today, n);
+    const calendarDaysOut = Math.round((date - today) / 86400000);
+    if (calendarDaysOut > HORIZON_CALENDAR_DAYS) break;
+    const label = n === 1 ? "day after" : n === 2 ? "day after tomorrow" : null;
+    options.push({ label, date });
+  }
+  return options;
 }
 
 const DEFAULT_OPTION_LABEL = "day after"; // which one is pre-selected on first load
@@ -212,6 +220,40 @@ function prunePending(confirmedRows, forDate) {
   savePending(list);
 }
 
+// ---- pending (optimistic) cancellations, kept in localStorage ------------
+// Mirrors the pending-bookings mechanism above, but for the removal side:
+// a "Cancel" row hasn't shown up in the Sheet yet, but the visitor who just
+// removed it shouldn't see it pop back as booked until the Sheet catches up.
+const PENDING_CANCELS_KEY = "hotdesk_pending_cancels_v1";
+
+function loadPendingCancels() {
+  try {
+    const raw = localStorage.getItem(PENDING_CANCELS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+function savePendingCancels(list) {
+  try { localStorage.setItem(PENDING_CANCELS_KEY, JSON.stringify(list)); } catch {}
+}
+function addPendingCancel(entry) {
+  const list = loadPendingCancels();
+  list.push(entry);
+  savePendingCancels(list);
+}
+function prunePendingCancels(confirmedRows, forDate) {
+  const list = loadPendingCancels().filter((c) => {
+    if (c.date !== forDate) return true;
+    // once the Sheet's own last row for this slot is itself a Cancel, our
+    // optimistic overlay is no longer needed
+    const matching = confirmedRows.filter((r) => r.Desk === c.desk && r.When === c.when && sameDate(r.Date, c.date));
+    const last = matching[matching.length - 1];
+    const confirmedByReal = last && (last.Action || "Book").trim() === "Cancel";
+    const tooOld = Date.now() - c.ts > 10 * 60 * 1000;
+    return !confirmedByReal && !tooOld;
+  });
+  savePendingCancels(list);
+}
+
 // ---- data fetch ------------------------------------------------------------
 async function fetchBookings() {
   const url = CONFIG.CSV_URL + (CONFIG.CSV_URL.includes("?") ? "&" : "?") + "_ts=" + Date.now();
@@ -223,14 +265,36 @@ async function fetchBookings() {
 
 // ---- rendering -------------------------------------------------------------
 
-// Who (if anyone) holds a given When-slot for a desk: a confirmed Sheet row
-// wins over a merely-pending local one; null means that slot is free.
-function slotOccupant(deskRows, deskPending, slotName) {
-  const real = deskRows.find((r) => r.When === slotName);
-  if (real) return { name: real.Name, pending: false };
+// Who (if anyone) holds a given When-slot for a desk. The Sheet is an
+// append-only event log (Book / Cancel rows), so the MOST RECENT real row
+// for a slot is authoritative; a row with no "Action" value at all predates
+// the Cancel feature and is treated as "Book" for backward compatibility.
+// A pending local cancel can override a real "Book" (optimistic removal,
+// not yet reflected in the Sheet); a pending local booking only applies
+// when there's no real row at all (or the real history ends in a Cancel).
+function slotOccupant(deskRows, deskPending, deskPendingCancels, slotName) {
+  const matching = deskRows.filter((r) => r.When === slotName);
+  const last = matching[matching.length - 1];
+
+  if (last) {
+    const action = (last.Action || "Book").trim();
+    if (action !== "Cancel") {
+      const pendingCancel = deskPendingCancels.find((c) => c.when === slotName);
+      if (pendingCancel) return null; // removed locally, Sheet hasn't caught up yet
+      return { name: last.Name, pending: false };
+    }
+  }
+
   const pend = deskPending.find((p) => p.when === slotName);
   if (pend) return { name: pend.name, pending: true };
   return null;
+}
+
+function removeButtonHtml(desk, slotName, occupant) {
+  if (occupant.pending) return ""; // nothing confirmed in the Sheet yet to remove
+  return `<button class="remove-btn" title="Remove this booking"
+    data-desk="${desk.id}" data-label="${escapeHtml(desk.label)}"
+    data-slot="${slotName}" data-name="${escapeHtml(occupant.name)}">✕</button>`;
 }
 
 function renderHalf(desk, slotName, occupant) {
@@ -238,7 +302,7 @@ function renderHalf(desk, slotName, occupant) {
     return `
       <div class="half booked${occupant.pending ? " pending" : ""}">
         <span class="half-name">${slotName}${occupant.pending ? " · booking…" : ""}</span>
-        <span class="who">${escapeHtml(occupant.name)}</span>
+        <span class="who">${escapeHtml(occupant.name)} ${removeButtonHtml(desk, slotName, occupant)}</span>
       </div>
     `;
   }
@@ -252,6 +316,7 @@ function renderHalf(desk, slotName, occupant) {
 
 function render(rows, forDate) {
   const pending = loadPending().filter((p) => p.date === forDate);
+  const pendingCancels = loadPendingCancels().filter((c) => c.date === forDate);
 
   for (const room of ROOMS) {
     const container = document.getElementById(room.elId);
@@ -273,10 +338,11 @@ function render(rows, forDate) {
 
       const deskRows = rows.filter((r) => r.Desk === desk.id && sameDate(r.Date, forDate));
       const deskPending = pending.filter((p) => p.desk === desk.id);
+      const deskPendingCancels = pendingCancels.filter((c) => c.desk === desk.id);
 
-      const wholeDay = slotOccupant(deskRows, deskPending, "Whole day");
-      const morning = slotOccupant(deskRows, deskPending, "Morning");
-      const afternoon = slotOccupant(deskRows, deskPending, "Afternoon");
+      const wholeDay = slotOccupant(deskRows, deskPending, deskPendingCancels, "Whole day");
+      const morning = slotOccupant(deskRows, deskPending, deskPendingCancels, "Morning");
+      const afternoon = slotOccupant(deskRows, deskPending, deskPendingCancels, "Afternoon");
 
       if (wholeDay) {
         // A whole-day booking (confirmed or pending) occupies both halves —
@@ -289,6 +355,7 @@ function render(rows, forDate) {
           <div class="desk-occupant">
             <span class="who">${escapeHtml(wholeDay.name)}</span>
             <span class="when">Whole day</span>
+            ${removeButtonHtml(desk, "Whole day", wholeDay)}
           </div>
         `;
       } else if (!morning && !afternoon) {
@@ -318,6 +385,11 @@ function render(rows, forDate) {
   document.querySelectorAll(".mini-book-btn").forEach((btn) => {
     btn.addEventListener("click", () =>
       openModalForSlot(btn.dataset.desk, btn.dataset.label, btn.dataset.slot)
+    );
+  });
+  document.querySelectorAll(".remove-btn").forEach((btn) => {
+    btn.addEventListener("click", () =>
+      openRemoveModal(btn.dataset.desk, btn.dataset.label, btn.dataset.slot, btn.dataset.name)
     );
   });
 }
@@ -421,6 +493,7 @@ async function confirmBooking() {
       [CONFIG.ENTRY_IDS.desk]: activeDesk,
       [CONFIG.ENTRY_IDS.room]: formRoomForDesk(activeDesk),
       [CONFIG.ENTRY_IDS.when]: when,
+      [CONFIG.ENTRY_IDS.action]: "Book",
       ...dateFieldsForEntry(CONFIG.ENTRY_IDS.date, forDateObj),
     });
     addPending({ desk: activeDesk, name, when, date: forDate, ts: Date.now() });
@@ -432,6 +505,77 @@ async function confirmBooking() {
   } finally {
     confirmBtn.disabled = false;
     confirmBtn.textContent = "Book it";
+  }
+}
+
+// ---- remove (cancel) flow: two-stage confirmation --------------------------
+let removeTarget = null; // { desk, deskLabel, when, name }
+let removeStage = 0;     // 0 = closed, 1 = first warning, 2 = second warning
+
+function openRemoveModal(desk, deskLabel, when, name) {
+  removeTarget = { desk, deskLabel, when, name };
+  removeStage = 1;
+  document.getElementById("removeModalError").textContent = "";
+  document.getElementById("removeModalBackdrop").classList.add("open");
+  renderRemoveStage();
+}
+
+function renderRemoveStage() {
+  const { deskLabel, when, name } = removeTarget;
+  const title = document.getElementById("removeModalTitle");
+  const body = document.getElementById("removeModalBody");
+  const confirmBtn = document.getElementById("removeConfirmBtn");
+
+  if (removeStage === 1) {
+    title.textContent = "Remove booking?";
+    body.innerHTML = `Remove <strong>${escapeHtml(name)}</strong>'s <strong>${escapeHtml(when)}</strong> booking on <strong>${escapeHtml(deskLabel)}</strong>?`;
+    confirmBtn.textContent = "Remove";
+  } else {
+    title.textContent = "Wait, really?";
+    body.innerHTML = `Sure sure it's you, <strong>${escapeHtml(name)}</strong>? 😊 This can't be undone.`;
+    confirmBtn.textContent = "Yes, it's me — remove it";
+  }
+}
+
+function closeRemoveModal() {
+  removeTarget = null;
+  removeStage = 0;
+  document.getElementById("removeModalBackdrop").classList.remove("open");
+}
+
+async function confirmRemove() {
+  if (removeStage === 1) {
+    removeStage = 2;
+    renderRemoveStage();
+    return;
+  }
+
+  const { desk, when } = removeTarget;
+  const forDate = getSelectedDateIso();
+  const forDateObj = parseIsoLocal(forDate);
+  const errEl = document.getElementById("removeModalError");
+  const confirmBtn = document.getElementById("removeConfirmBtn");
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = "Removing…";
+
+  try {
+    await submitToGoogleForm({
+      [CONFIG.ENTRY_IDS.name]: removeTarget.name,
+      [CONFIG.ENTRY_IDS.desk]: desk,
+      [CONFIG.ENTRY_IDS.room]: formRoomForDesk(desk),
+      [CONFIG.ENTRY_IDS.when]: when,
+      [CONFIG.ENTRY_IDS.action]: "Cancel",
+      ...dateFieldsForEntry(CONFIG.ENTRY_IDS.date, forDateObj),
+    });
+    addPendingCancel({ desk, when, date: forDate, ts: Date.now() });
+    closeRemoveModal();
+    setStatus("Removal sent — refreshing…");
+    await refresh();
+  } catch (e) {
+    errEl.textContent = "Something went wrong removing the booking. Try again.";
+  } finally {
+    confirmBtn.disabled = false;
+    if (removeStage === 2) confirmBtn.textContent = "Yes, it's me — remove it";
   }
 }
 
@@ -454,8 +598,8 @@ function populateDateSelect() {
     const iso = isoDate(opt.date);
     const el = document.createElement("option");
     el.value = iso;
-    el.dataset.label = opt.label;
-    el.textContent = `${friendlyDate(opt.date)} (${opt.label})`;
+    el.dataset.label = opt.label || "";
+    el.textContent = opt.label ? `${friendlyDate(opt.date)} (${opt.label})` : friendlyDate(opt.date);
     sel.appendChild(el);
   }
 
@@ -482,6 +626,7 @@ async function refresh() {
   try {
     const rows = await fetchBookings();
     prunePending(rows, forDate);
+    prunePendingCancels(rows, forDate);
     render(rows, forDate);
     setStatus("Up to date · " + new Date().toLocaleTimeString());
   } catch (e) {
@@ -500,6 +645,12 @@ function init() {
   document.getElementById("confirmBtn").addEventListener("click", confirmBooking);
   document.getElementById("modalBackdrop").addEventListener("click", (e) => {
     if (e.target.id === "modalBackdrop") closeModal();
+  });
+
+  document.getElementById("removeCancelBtn").addEventListener("click", closeRemoveModal);
+  document.getElementById("removeConfirmBtn").addEventListener("click", confirmRemove);
+  document.getElementById("removeModalBackdrop").addEventListener("click", (e) => {
+    if (e.target.id === "removeModalBackdrop") closeRemoveModal();
   });
 
   refresh();

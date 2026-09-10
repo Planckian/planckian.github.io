@@ -1,30 +1,49 @@
-# Planckian Hot Desk Booking
+# Lukewarm Desk Booking System
 
-A tiny standalone static site to see and book hot desks for **today**, the
-**day after**, or the **day after tomorrow** (visitor's choice, the two
-forward options skip weekends). Room A (4 desks, desk 1 permanently held by
-Alessio), Room B (4 desks), and 3 overflow "extra" spots.
+A tiny standalone static site to see and book hot desks — **today**, and any
+business day up to **two weeks ahead** (weekends never appear as an option).
+Room A (4 desks, desk 1 permanently held by Alessio), Room B (4 desks), and 3
+overflow "extra" spots.
 
 The page is the only thing people interact with. Behind the scenes it uses a
 Google Form as the write path and a published Google Sheet (as CSV) as the read
 path — no server, no third-party account beyond Google, free.
 
-## 1. The Google Form (already set up)
+## ⚠ One setup step still needed: the "Action" question
 
-The form ("Booking a table" / "these desks are hot") already exists with 5
-questions: `Name` (short answer), `When` (multiple choice: Morning /
-Afternoon / Whole day), `Room` (multiple choice: Room A / Room B / Extra),
-`Date` (native date question), `Desk` (short answer, free text like `A2`,
-`B3`, `X1`). Nobody fills this form in directly — the site submits to it
-silently in the background.
+The form needs a 6th question added before booking removal will work:
 
-`js/config.js` already has the real `FORM_ACTION_URL` and all 5
-`ENTRY_IDS` wired in. You only need step 2 below (`CSV_URL`) to finish setup.
-If the form's questions are ever rebuilt from scratch, the entry IDs will
-change — get the new ones by opening the form's `viewform` URL, running
-`JSON.stringify(window.FB_PUBLIC_LOAD_DATA_)` in the browser console, and
-reading off each question's id from that structure (or send me the link and
-I'll do it).
+- **Type:** Multiple choice
+- **Title:** exactly `Action`
+- **Options:** `Book` and `Cancel`
+- **Required:** no
+
+This powers the "remove a booking" feature (see Notes below) — removing a
+name doesn't delete anything from the Sheet, it adds a new row with
+`Action = Cancel`, and the site treats the *most recent* row for a given
+desk/date/slot as the current truth. Until this question exists, attempting
+to remove a booking will submit but silently do nothing (the field name sent
+won't match any question on Google's end).
+
+Add it, then tell me (or paste the form's `viewform` link again) and I'll
+grab its real entry ID and finish wiring `js/config.js`.
+
+## 1. The Google Form (already set up, except Action above)
+
+The form ("Booking a table" / "these desks are hot") has 5 questions already:
+`Name` (short answer), `When` (multiple choice: Morning / Afternoon / Whole
+day), `Room` (multiple choice: Room A / Room B / Extra), `Date` (native date
+question), `Desk` (short answer, free text like `A2`, `B3`, `X1`) — plus the
+`Action` question described above. Nobody fills this form in directly — the
+site submits to it silently in the background.
+
+`js/config.js` already has the real `FORM_ACTION_URL` and the first 5
+`ENTRY_IDS` wired in; `ENTRY_IDS.action` is still a placeholder until the
+question above exists. If the form's questions are ever rebuilt from
+scratch, all the entry IDs will change — get new ones by opening the form's
+`viewform` URL, running `JSON.stringify(window.FB_PUBLIC_LOAD_DATA_)` in the
+browser console, and reading off each question's id from that structure (or
+send me the link and I'll do it).
 
 ## 2. The response Sheet (already set up)
 
@@ -56,15 +75,14 @@ person).
 
 ## Notes / limitations
 
-- **Booking date is a picker, not fixed.** A dropdown at the top lets the
-  visitor choose **today**, **day after**, or **day after tomorrow**. "Today"
-  is the plain current date (so you can see who's actually in the office
-  right now); the two forward options are *business days* (Saturday/Sunday
-  skipped entirely), so from a Friday they resolve to Monday and Tuesday.
-  Defaults to "day after" on first load. Computed fresh in the visitor's
-  browser on every load/refresh; no daily reset needed. See
-  `targetDateOptions()` / `addBusinessDays()` / `DEFAULT_OPTION_LABEL` in
-  `js/app.js` to change the offsets, the default, or add more options.
+- **Booking date is a picker, not fixed.** A dropdown at the top lists
+  **today** plus every business day out to **two weeks ahead**
+  (`HORIZON_CALENDAR_DAYS` in `js/app.js`) — weekends never appear as an
+  option, so a Friday's next entry is Monday. Defaults to "day after" on
+  first load. Computed fresh in the visitor's browser on every load/refresh;
+  no daily reset needed. See `targetDateOptions()` / `addBusinessDays()` /
+  `HORIZON_CALENDAR_DAYS` / `DEFAULT_OPTION_LABEL` in `js/app.js` to change
+  the horizon or the default.
 - **Alessio's desk (Room A, Desk 1)** is hard-coded in `js/app.js` — it never
   reads from the sheet and can't be booked through the UI. Edit the
   `fixedOccupant` field there if this ever changes.
@@ -83,8 +101,17 @@ person).
   office. Two people booking the same desk within the same refresh window is
   possible in theory; if it happens, sort it out in person (or edit the Sheet
   by hand to remove the duplicate row).
-- **Canceling a booking** isn't exposed in the UI. To free up a desk someone
-  booked by mistake, delete that row directly in the Google Sheet.
+- **Removing a booking** is exposed as a small ✕ next to any booked name
+  (not shown for pending/unconfirmed bookings, and not for Alessio's fixed
+  desk). Clicking it needs **two confirmations** in a row — "Remove
+  booking?" then "Sure sure it's you, *Name*? 😊 This can't be undone." —
+  before anything is submitted. Under the hood this doesn't delete the
+  Sheet row (the site has no write access beyond the Form); it appends a
+  new row for that same desk/date/slot with `Action = Cancel`. The site
+  always reads the *most recent* row per desk/date/slot as authoritative,
+  so a Cancel row after a Book row frees the slot again (`slotOccupant()` in
+  `js/app.js`). This means the Sheet keeps a full history rather than a
+  clean current-state table — that's expected, not a bug.
 - **Date column parsing:** the `Date` question is Google's native date-picker
   type, so the Sheet shows it as locale-formatted text (e.g. `4/9/2026`)
   rather than ISO. The site parses this defensively (`parseSheetDateToIso` in

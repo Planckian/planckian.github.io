@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Planckian Hot Desk Booking</title>
+<title>Lukewarm Desk Booking System</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <header class="topbar">
-    <h1>Planckian Office</h1>
+    <h1>Lukewarm Desk Booking System</h1>
     <div class="date-picker">
       <label for="targetDateSelect">Booking for</label>
       <select id="targetDateSelect"></select>
@@ -60,10 +60,23 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="removeModalBackdrop">
+    <div class="modal">
+      <h3 id="removeModalTitle">Remove booking</h3>
+      <p id="removeModalBody"></p>
+      <div class="modal-actions">
+        <button id="removeCancelBtn" class="btn secondary">Never mind</button>
+        <button id="removeConfirmBtn" class="btn danger">Remove</button>
+      </div>
+      <p class="modal-error" id="removeModalError"></p>
+    </div>
+  </div>
+
   <footer>
-    <p>Choose <strong>today</strong>, <strong>day after</strong>, or <strong>day after tomorrow</strong>
-      above (the two forward options skip weekends — from Friday, they land on Monday/Tuesday). Data is stored in a shared Google
-      Sheet — it may take a minute to appear for other people. See <code>README.md</code> for setup.</p>
+    <p>Pick any date above — <strong>today</strong> through <strong>two weeks ahead</strong>, weekends
+      skipped. Booked names show a <strong>✕</strong> to remove them (two confirmations required). Data
+      is stored in a shared Google Sheet — it may take a minute to appear for other people. See
+      <code>README.md</code> for setup.</p>
   </footer>
 
   <script src="js/config.js"></script>
