@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Internal — not part of the public site.
+Disallow: /lab/
+
+# Internal office tool, not site content.
+Disallow: /hotdesk-booking/

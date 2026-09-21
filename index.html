@@ -1,74 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Planckian | Quantum Systems</title>
-  <link rel="stylesheet" href="style.css" />
-  <meta name="description" content="Planckian develops next-generation scalable quantum computing architectures." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Planckian — globally controlled quantum processors</title>
+<meta name="description" content="Planckian builds superconducting quantum processors driven by a handful of shared control lines instead of one wire per qubit. Papers, interactive demos, and the ArchBuilder design suite.">
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-  <div class="container">
-    <aside class="sidebar">
-      <img src="logo.png" alt="Planckian Logo" class="logo" />
-      <nav>
-        <ul>
-          <li><a href="https://www.planckian.co" target="_blank">Main Website</a></li>
-          <li><a href="docs.html">Documentation</a></li>
-          <li><a href="https://github.com/planckianq" target="_blank">GitHub Projects</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-      </nav>
-    </aside>
-<main class="content">
-  <h1>Planckian</h1>
-  <p>
-    Planckian develops scalable quantum computing architectures based on superconducting qubits.
-    Our approach focuses on reducing control complexity while maintaining qubit performance.
-  </p>
+<a class="skip" href="#main">Skip to content</a>
 
-  <h2>Architecture</h2>
-  <p>
-    Current quantum systems rely on dedicated control lines for each qubit, increasing wiring density,
-    degrading performance, and limiting scalability. 
-    Planckian’s architecture employs shared control lines, minimizing hardware overhead and improving scalability.
-  </p>
+<div class="top">
+  <span class="brand"><img src="assets/logo.png" alt="Planckian"><span class="div"></span><span class="kicker">Planckian srl</span></span>
+  <span class="sp"></span>
+  <nav>
+    <a href="#approach">Approach</a>
+    <a href="architectures.html">Research</a>
+    <a href="#archbuilder">ArchBuilder</a>
+    <a href="software.html">Software</a>
+    <a href="papers.html">Papers</a>
+    <a href="#play">Demos</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <a class="btn primary" href="https://www.planckian.co" target="_blank" rel="noopener" title="Planckian's company website">Company site ↗</a>
+</div>
 
-  <h2>Control Protocol</h2>
-  <p>
-    Our control protocol enables simultaneous addressing of qubits through global signals.
-    Engineered qubit couplings allow selective operations and data movement across the chip,
-    simplifying control and improving efficiency.
-  </p>
+<div class="sitebar">
+  This is Planckian's <b>open-source and research</b> site, hosted on GitHub Pages — software, papers and interactive demos.
+  The company website is <a href="https://www.planckian.co" target="_blank" rel="noopener">planckian.co&nbsp;↗</a>.
+</div>
 
-  <section class="projects">
-    <h2>Open Software</h2>
-    <p>
-      This page hosts open-source software developed by Planckian in support of our research in scalable quantum and global control and computation.
-      Source code and documentation is available at 
-      <a href="https://github.com/planckianq" target="_blank">GitHub</a>.
+<main id="main">
+
+  <!-- ══════════════ hero ══════════════ -->
+  <section class="wrap hero">
+    <p class="eyebrow">Superconducting quantum processors</p>
+    <h1>A whole lot of qubits.<br><em>A handful of wires.</em></h1>
+    <p class="lede">
+      Every superconducting qubit normally wants its own control lines, and that — not coherence —
+      is what stops the technology scaling. Planckian drives the whole register with a few shared
+      fields instead, and engineers the couplings so that a global pulse still does something
+      different to each qubit.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="architectures.html">The two mechanisms →</a>
+      <a class="btn" href="papers.html">Seven papers</a>
+      <a class="btn" href="#play">Play with it</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">4</div><div class="l">control channels,<br>any register size</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">auxiliary<br>qubits</div></div>
+      <div class="stat"><div class="n">10⁻³</div><div class="l">QEC threshold<br>on the ring</div></div>
+      <div class="stat"><div class="n">350 MHz</div><div class="l">ZZ coupling<br>measured on chip</div></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ approach ══════════════ -->
+  <section class="wrap band" id="approach">
+    <p class="eyebrow">The approach</p>
+    <h2>If every qubit hears the same pulse,<br>what makes them behave differently?</h2>
+    <p class="lede" style="margin-bottom:34px">
+      There are two good answers, and they are opposites. Planckian works on both.
+    </p>
+
+    <div class="grid two">
+      <a class="card" href="games.html">
+        <p class="eyebrow">Switchable XY · iSWAP</p>
+        <h3>Move the qubit to the control</h3>
+        <p class="small">
+          Keep only two global couplings and one addressable site. Alternating layers of exchange
+          gates transport any qubit to that site, so locality of control is traded for depth of
+          routing — and the wire count never grows with the register.
+        </p>
+        <div class="chips" style="margin-top:14px">
+          <span class="chip">iSWAP native</span><span class="chip">zero ancillas</span><span class="chip">N on a ring</span>
+        </div>
+        <span class="go">Five demos and a tutorial <span class="arrow">→</span></span>
+      </a>
+
+      <a class="card" href="games-zz.html">
+        <p class="eyebrow">Always-on ZZ · blockade</p>
+        <h3>Let the neighbours decide</h3>
+        <p class="small">
+          Do not switch anything off. Make the parasitic ZZ interaction the largest energy in the
+          problem, and an excited qubit shifts its neighbour clean out of resonance — so a shared
+          pulse moves only the qubits whose surroundings permit it.
+        </p>
+        <div class="chips" style="margin-top:14px">
+          <span class="chip">Rydberg-like blockade</span><span class="chip">measured on chip</span><span class="chip">4N conveyor loop</span>
+        </div>
+        <span class="go">Two demos and a tutorial <span class="arrow">→</span></span>
+      </a>
+    </div>
+
+    <p class="small" style="margin-top:22px">
+      Side by side, with the native interaction, the addressing rule and the qubit count for each:
+      <a href="architectures.html">both mechanisms compared →</a>
     </p>
   </section>
 
+  <!-- ══════════════ ArchBuilder ══════════════ -->
+  <section class="wrap band" id="archbuilder">
+    <p class="eyebrow">Upcoming <span class="badge soon" style="margin-left:8px">v0.5 alpha</span></p>
+    <h2>ArchBuilder — <em>schematic to optimised pulse,</em><br>in one environment</h2>
+    <p class="lede">
+      Designing a globally controlled processor means moving constantly between circuit layout,
+      Hamiltonian, pulse and simulation. ArchBuilder is the GUI-driven suite we built to stop that
+      being nine separate tools with nine file formats. It is in alpha and not yet publicly
+      released — the API documentation is already online.
+    </p>
 
-      <section id="contact">
-        <h2>Contact</h2>
-        <p>
-          To learn more or collaborate, please visit
-          <a href="https://www.planckian.com" target="_blank">planckian.com</a>
-          or email us at
-          <a href="mailto:hello@planckian.com">hello@planckian.com</a>.
-        </p>
-      </section>
-  
+    <div class="tablewrap" style="margin-top:28px">
+      <table class="tools">
+        <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>ArchBuilder</td><td>Project manager and central hub — loads and saves projects, wires the tools together</td></tr>
+          <tr><td>Steppenwolf</td><td>Superconducting circuit design via QuCAT; generates Hamiltonians and exports JSON specs</td></tr>
+          <tr><td>Livingston</td><td>Symbolic Hamiltonian editor; RWA, frame transformations, graph-based term algebra</td></tr>
+          <tr><td>Morpheus</td><td>Wiring canvas — connects degrees of freedom and layouts across tools</td></tr>
+          <tr><td>Bovary</td><td>Pulse composer; builds and previews drive pulses</td></tr>
+          <tr><td>Metamorphosis</td><td>Quantum dynamics simulator; integrates with QuTiP for time evolution</td></tr>
+          <tr><td>Frankenstein</td><td>Gate-level optimizer; connects to AIgor for GRAPE and CRAB pulse optimisation</td></tr>
+          <tr><td>AIgor</td><td>Standalone pulse optimizer using <code>qutip-qtrl</code> — GRAPE, CRAB, basin-hopping</td></tr>
+          <tr><td>Zhivago</td><td>Julia tensor-network simulation backend, ITensor-based, optional</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cta">
+      <a class="btn primary" href="software.html">About ArchBuilder →</a>
+      <a class="btn" href="ArchBuilder/index.html">API documentation</a>
+      <a class="btn" href="Zhivago/index.html">Zhivago docs</a>
+    </div>
+    <p class="note" style="margin-top:18px">
+      Python 3.11+ · Julia 1.11+ for the Zhivago backend · MIT licence
+    </p>
+  </section>
+
+  <!-- ══════════════ demos ══════════════ -->
+  <section class="wrap band" id="play">
+    <p class="eyebrow">Interactive</p>
+    <h2>Seven short things to play with</h2>
+    <p class="lede" style="margin-bottom:34px">
+      Each one is a hands-on puzzle taken straight from the architecture — about a minute each,
+      no install, works on a phone.
+    </p>
+
+    <div class="grid three">
+      <a class="card" href="games.html">
+        <p class="eyebrow">Switchable XY</p>
+        <h3>Five demos</h3>
+        <p class="small">One bond, then a chain, then the ring itself, then routing on any lattice —
+          and the logical qubits that ride on top. The last one is passphrase-locked.</p>
+        <span class="go">Open <span class="arrow">→</span></span>
+      </a>
+      <a class="card" href="games-zz.html">
+        <p class="eyebrow">Always-on ZZ</p>
+        <h3>Two demos</h3>
+        <p class="small">A live Schrödinger solve of the measured blockade experiment, and the
+          domain-wall conveyor that carries a logical qubit.</p>
+        <span class="go">Open <span class="arrow">→</span></span>
+      </a>
+      <a class="card" href="tutorial.html">
+        <p class="eyebrow">Theory</p>
+        <h3>Two tutorials</h3>
+        <p class="small">Six minutes on the four-control-line machine, seven on the blockade — the
+          physics under the demos, written out.</p>
+        <span class="go">Read <span class="arrow">→</span></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══════════════ software ══════════════ -->
+  <section class="wrap band" id="software">
+    <p class="eyebrow">Open software</p>
+    <h2>What we publish</h2>
+    <div class="grid three">
+      <a class="card" href="software.html">
+        <span class="badge soon">Alpha</span>
+        <h3 style="margin-top:14px">ArchBuilder</h3>
+        <p class="small">The quantum architecture design suite. Nine tools, one workspace.</p>
+        <span class="go">Details <span class="arrow">→</span></span>
+      </a>
+      <a class="card" href="Zhivago/index.html">
+        <span class="badge live">Docs online</span>
+        <h3 style="margin-top:14px">Zhivago</h3>
+        <p class="small">Julia tensor-network simulation backend, built on ITensor. Runs standalone
+          or inside ArchBuilder.</p>
+        <span class="go">Documentation <span class="arrow">→</span></span>
+      </a>
+      <a class="card" href="https://github.com/planckianq" target="_blank" rel="noopener">
+        <span class="badge">Source</span>
+        <h3 style="margin-top:14px">GitHub</h3>
+        <p class="small">Source code and releases for the software developed at Planckian in
+          support of our research.</p>
+        <span class="go">github.com/planckianq <span class="arrow">↗</span></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══════════════ contact ══════════════ -->
+  <section class="wrap band" id="contact">
+    <p class="eyebrow">Contact</p>
+    <h2>Work with us</h2>
+    <p class="lede">
+      Planckian srl builds scalable quantum computing architectures based on superconducting
+      qubits, with partners at Scuola Normale Superiore, Università di Napoli Federico II,
+      Università di Pisa and MIT. To learn more or collaborate, get in touch.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="mailto:hello@planckian.com">hello@planckian.com</a>
+      <a class="btn" href="https://www.planckian.co" target="_blank" rel="noopener">planckian.co ↗</a>
+      <a class="btn" href="https://github.com/planckianq" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </section>
+
 </main>
 
-
-
-
-    </main>
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <img src="assets/logo.png" alt="Planckian">
+        <p class="small" style="max-width:34ch">
+          Scalable quantum computing architectures based on superconducting qubits.
+        </p>
+      </div>
+      <div>
+        <h4>Research</h4>
+        <ul>
+          <li><a href="architectures.html">Both mechanisms</a></li>
+          <li><a href="papers.html">Papers</a></li>
+          <li><a href="tutorial.html">XY tutorial</a></li>
+          <li><a href="tutorial-zz.html">ZZ tutorial</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Demos</h4>
+        <ul>
+          <li><a href="games.html">Switchable XY</a></li>
+          <li><a href="games-zz.html">Always-on ZZ</a></li>
+          <li><a href="lab/viper.html">Viper (locked)</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Software</h4>
+        <ul>
+          <li><a href="software.html">ArchBuilder</a></li>
+          <li><a href="docs.html">Documentation</a></li>
+          <li><a href="https://github.com/planckianq" target="_blank" rel="noopener">GitHub ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© Planckian srl</span><span>·</span>
+      <span>GitHub Pages site — the company website is</span>
+      <span>·</span>
+      <a href="https://www.planckian.co" target="_blank" rel="noopener">planckian.co</a>
+      <span>·</span>
+      <a href="mailto:hello@planckian.com">hello@planckian.com</a>
+    </div>
   </div>
+</footer>
 </body>
 </html>
-
-

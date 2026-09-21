@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ArchBuilder — Planckian</title>
+<meta name="description" content="ArchBuilder is Planckian's quantum architecture design suite for superconducting devices: circuit design, Hamiltonian analysis, pulse engineering and simulation in one GUI workspace.">
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:8px 0 6px}
+  @media(max-width:820px){.flow{grid-template-columns:repeat(2,1fr)}}
+  .step{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:15px 16px}
+  .step .i{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--brand);margin:0 0 8px}
+  .step .t{font-family:var(--display);font-weight:600;font-size:15px;margin:0 0 6px}
+  .step .d{font-size:12.5px;line-height:1.5;color:var(--dim);margin:0}
+  pre{font-family:var(--mono);font-size:13px;line-height:1.7;background:var(--bg2);
+    border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:12px;
+    padding:16px 18px;overflow-x:auto;color:#dcdfe9;margin:0 0 16px}
+  pre b{color:var(--brand);font-weight:700}
+  .req{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+  @media(max-width:700px){.req{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="top">
+  <a class="brand" href="index.html"><img src="assets/logo.png" alt="Planckian"><span class="div"></span><span class="kicker">Planckian srl</span></a>
+  <span class="sp"></span>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="architectures.html">Research</a>
+    <a href="software.html" aria-current="page">Software</a>
+    <a href="docs.html">Docs</a>
+    <a href="papers.html">Papers</a>
+    <a href="games.html">Demos</a>
+  </nav>
+  <a class="btn primary" href="ArchBuilder/index.html">API docs →</a>
+</div>
+
+<div class="sitebar">
+  This is Planckian's <b>open-source and research</b> site, hosted on GitHub Pages — software, papers and interactive demos.
+  The company website is <a href="https://www.planckian.co" target="_blank" rel="noopener">planckian.co&nbsp;↗</a>.
+</div>
+
+<main id="main">
+
+  <section class="wrap hero">
+    <p class="eyebrow">Software <span class="badge soon" style="margin-left:8px">v0.5 alpha · upcoming</span></p>
+    <h1>ArchBuilder</h1>
+    <p class="lede">
+      A quantum architecture design suite for superconducting quantum devices. ArchBuilder is an
+      integrated, GUI-driven workspace for circuit design, Hamiltonian analysis, pulse engineering
+      and quantum simulation — <em>from schematic to optimised pulse, all in one environment.</em>
+    </p>
+    <p class="small" style="max-width:70ch">
+      ArchBuilder is in alpha and has not had a public release yet. The rendered API documentation
+      is already online, and every release ships the same documentation alongside the application
+      so it works offline.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="ArchBuilder/index.html">API documentation →</a>
+      <a class="btn" href="Zhivago/index.html">Zhivago documentation</a>
+      <a class="btn" href="https://github.com/planckianq" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </section>
+
+  <!-- ══════════════ the pipeline ══════════════ -->
+  <section class="wrap band">
+    <p class="eyebrow">The pipeline</p>
+    <h2>One project file, five stages</h2>
+    <p class="lede" style="margin-bottom:30px">
+      The tools are not separate applications that happen to sit in the same folder. A shared
+      project hub and an event bus carry the circuit, the layout and the Hamiltonian between them,
+      so a change upstream shows up downstream.
+    </p>
+    <div class="flow">
+      <div class="step"><p class="i">01</p><p class="t">Design</p><p class="d">Draw the superconducting circuit in Steppenwolf; QuCAT turns it into a Hamiltonian.</p></div>
+      <div class="step"><p class="i">02</p><p class="t">Analyse</p><p class="d">Edit that Hamiltonian symbolically in Livingston — RWA, frame changes, term algebra.</p></div>
+      <div class="step"><p class="i">03</p><p class="t">Wire</p><p class="d">Connect degrees of freedom and layouts across the tools on the Morpheus canvas.</p></div>
+      <div class="step"><p class="i">04</p><p class="t">Pulse</p><p class="d">Compose drives in Bovary, then optimise them with Frankenstein and AIgor.</p></div>
+      <div class="step"><p class="i">05</p><p class="t">Simulate</p><p class="d">Time-evolve in Metamorphosis via QuTiP, or hand large systems to Zhivago.</p></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ the tools ══════════════ -->
+  <section class="wrap band">
+    <p class="eyebrow">The tools</p>
+    <h2>Nine tools in one workspace</h2>
+    <div class="tablewrap" style="margin-top:26px">
+      <table class="tools">
+        <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>ArchBuilder</td><td>Project manager and central hub — loads and saves projects, wires tools together</td></tr>
+          <tr><td>Steppenwolf</td><td>Superconducting circuit design via QuCAT; generates Hamiltonians and exports JSON specs</td></tr>
+          <tr><td>Livingston</td><td>Symbolic Hamiltonian editor; RWA, frame transformations, graph-based term algebra</td></tr>
+          <tr><td>Morpheus / Lines</td><td>Wiring canvas — connects degrees of freedom and layouts across tools</td></tr>
+          <tr><td>Bovary</td><td>Pulse composer; builds and previews drive pulses</td></tr>
+          <tr><td>Metamorphosis</td><td>Quantum dynamics simulator; integrates with QuTiP for time evolution</td></tr>
+          <tr><td>Frankenstein</td><td>Gate-level optimizer; connects to AIgor for GRAPE and CRAB pulse optimisation</td></tr>
+          <tr><td>AIgor</td><td>Standalone pulse optimizer using <code>qutip-qtrl</code> — GRAPE, CRAB, basin-hopping</td></tr>
+          <tr><td>Zhivago</td><td>Julia tensor-network simulation backend, ITensor-based, optional</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small" style="margin-top:18px">
+      New GUI apps and plugins are discovered at startup, so the suite can be extended without
+      touching the shell. Full class and function reference:
+      <a href="ArchBuilder/index.html">ArchBuilder API documentation →</a>
+    </p>
+  </section>
+
+  <!-- ══════════════ requirements ══════════════ -->
+  <section class="wrap band">
+    <p class="eyebrow">Running it</p>
+    <h2>Requirements and install</h2>
+    <div class="req">
+      <div class="card"><h3>Python 3.11+</h3><p class="small">With conda (Anaconda or Miniconda) strongly recommended for environment management.</p></div>
+      <div class="card"><h3>Julia 1.11+</h3><p class="small">Only needed for the Zhivago tensor-network simulation backend. Everything else runs without it.</p></div>
+      <div class="card"><h3>Windows · macOS · Linux</h3><p class="small">One-shot bootstrap script per platform. Linux also needs <code>python3-tk</code>.</p></div>
+    </div>
+
+    <h3 style="margin-top:38px">Interactive installer</h3>
+    <p class="small">The wizard creates the conda environment, installs core and optional packages, sets up the Julia bridge and registers your licence.</p>
+<pre>python Installation/install.py
+
+conda activate Planckian
+python ArchBuilderShell.py</pre>
+    <p class="small">
+      The installer can also run non-interactively for CI, with
+      <code>--create-env</code>, <code>--core</code>, <code>--optional</code>,
+      <code>--julia</code>, <code>--docs</code> and <code>--register</code>.
+    </p>
+
+    <h3 style="margin-top:34px">Zhivago on its own</h3>
+    <p class="small">
+      The simulation backend is self-contained and can be installed without ArchBuilder — the
+      setup script offers it as a separate option. Its documentation is
+      <a href="Zhivago/index.html">here</a>.
+    </p>
+  </section>
+
+  <!-- ══════════════ licence ══════════════ -->
+  <section class="wrap band">
+    <p class="eyebrow">Licence</p>
+    <h2>MIT</h2>
+    <p class="lede">
+      ArchBuilder is developed by Planckian and released under the MIT Licence. It bundles
+      third-party software that stays under its own terms — most notably
+      <code>Steppenwolf/qucat_v2/</code> and <code>qucat_v3/</code>, which are modified copies of
+      <a href="https://qucat.org" target="_blank" rel="noopener">QuCAT</a> 1.0.3
+      (MIT, © 2018 Mario F. Gely). The full list ships as <code>THIRD_PARTY_NOTICES.md</code>.
+    </p>
+    <p class="small">
+      <code>license.json</code>, written by the installer, is a local registration record. It is
+      not a licence grant and does not restrict the rights given above.
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <img src="assets/logo.png" alt="Planckian">
+        <p class="small" style="max-width:34ch">Scalable quantum computing architectures based on superconducting qubits.</p>
+      </div>
+      <div>
+        <h4>Research</h4>
+        <ul>
+          <li><a href="architectures.html">Both mechanisms</a></li>
+          <li><a href="papers.html">Papers</a></li>
+          <li><a href="tutorial.html">XY tutorial</a></li>
+          <li><a href="tutorial-zz.html">ZZ tutorial</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Demos</h4>
+        <ul>
+          <li><a href="games.html">Switchable XY</a></li>
+          <li><a href="games-zz.html">Always-on ZZ</a></li>
+          <li><a href="lab/viper.html">Viper (locked)</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Software</h4>
+        <ul>
+          <li><a href="ArchBuilder/index.html">ArchBuilder API</a></li>
+          <li><a href="Zhivago/index.html">Zhivago</a></li>
+          <li><a href="docs.html">All documentation</a></li>
+          <li><a href="https://github.com/planckianq" target="_blank" rel="noopener">GitHub ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© Planckian srl</span><span>·</span>
+      <span>GitHub Pages site — the company website is</span><span>·</span>
+      <a href="https://www.planckian.co" target="_blank" rel="noopener">planckian.co</a><span>·</span>
+      <a href="mailto:hello@planckian.com">hello@planckian.com</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<title>Seal tool — Planckian internal</title>
+<link rel="icon" href="../assets/logo.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  .pad{max-width:900px;margin:0 auto;padding:34px 24px 80px}
+  label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--dim);margin:22px 0 8px}
+  textarea,input[type=text],input[type=number]{width:100%;font-family:var(--mono);font-size:13px;
+    line-height:1.6;background:var(--bg2);color:var(--txt);border:1px solid var(--line2);
+    border-radius:11px;padding:13px 15px}
+  textarea{min-height:230px;resize:vertical}
+  textarea:focus,input:focus{outline:none;border-color:var(--brand)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .row>div{flex:1 1 200px}
+  .act{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .act button{font-family:var(--mono);font-size:13px;font-weight:700;background:var(--brand);
+    color:#fff;border:1px solid var(--brand);border-radius:10px;padding:12px 20px;cursor:pointer;min-height:46px}
+  .act button.ghost{background:transparent;color:var(--dim);border-color:var(--line2);font-weight:400}
+  .act button.ghost:hover{color:var(--txt);border-color:var(--brand)}
+  .act button:disabled{opacity:.5;cursor:default}
+  .state{font-family:var(--mono);font-size:12px;color:var(--dim)}
+  .state.ok{color:var(--green)} .state.err{color:var(--brand)}
+  pre{font-family:var(--mono);font-size:12px;line-height:1.65;background:var(--bg2);
+    border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:12px;
+    padding:16px 18px;overflow-x:auto;color:#dcdfe9;white-space:pre-wrap;word-break:break-all;margin:16px 0 0}
+  .warn{background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.35);border-radius:12px;
+    padding:15px 18px;color:var(--gold);font-size:13.5px;line-height:1.6;margin:0 0 8px}
+</style>
+</head>
+<body>
+<div class="pad">
+  <p class="eyebrow">Internal tool</p>
+  <h1 style="font-size:32px">Seal a page</h1>
+  <p class="lede" style="font-size:16px">
+    Encrypts a block of HTML so it can be committed to the public repository without being
+    readable. Paste the plaintext, choose a passphrase, and copy the four strings into the
+    <code>SEAL</code> object in <code>lab/upcoming.html</code>.
+  </p>
+
+  <div class="warn">
+    This runs entirely in your browser — no network request is made, and nothing is stored.
+    It protects the words from someone reading the repo. It is <b>not</b> access control: the
+    passphrase cannot be revoked for one person, so do not seal anything that would cause real
+    harm if it leaked.
+  </div>
+
+  <label for="plain">Plaintext HTML (the page body — sections, not a whole document)</label>
+  <textarea id="plain" spellcheck="false" placeholder="&lt;section class=&quot;wrap band&quot;&gt; … &lt;/section&gt;"></textarea>
+
+  <div class="row">
+    <div>
+      <label for="pass">Passphrase</label>
+      <input type="text" id="pass" spellcheck="false" autocomplete="off" placeholder="choose something long">
+    </div>
+    <div style="flex:0 0 170px">
+      <label for="iter">PBKDF2 iterations</label>
+      <input type="number" id="iter" value="250000" min="100000" step="50000">
+    </div>
+  </div>
+
+  <div class="act">
+    <button id="seal">Seal →</button>
+    <button class="ghost" id="copy" disabled>Copy the SEAL block</button>
+    <button class="ghost" id="verify" disabled>Verify it unseals</button>
+    <span class="state" id="state"></span>
+  </div>
+
+  <pre id="out" hidden></pre>
+
+  <p class="small" style="margin-top:30px">
+    <a href="upcoming.html">← the sealed page</a> &nbsp;·&nbsp; <a href="../index.html">public site</a>
+  </p>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const enc = new TextEncoder();
+const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+let last = null;
+
+async function keys(pass, salt, iterations){
+  const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    {name:"PBKDF2", salt, iterations, hash:"SHA-256"}, base, 512);
+  const dk = new Uint8Array(bits);
+  return {encKey: dk.slice(0,32), macKey: dk.slice(32,64)};
+}
+
+function join(iv, ct){
+  const a = new Uint8Array(iv.length + ct.length);
+  a.set(iv, 0); a.set(ct, iv.length);
+  return a;
+}
+
+async function seal(plain, pass, iterations){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(16));
+  const {encKey, macKey} = await keys(pass, salt, iterations);
+  const ak = await crypto.subtle.importKey("raw", encKey, {name:"AES-CBC"}, false, ["encrypt"]);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name:"AES-CBC", iv}, ak, enc.encode(plain)));
+  const hk = await crypto.subtle.importKey("raw", macKey, {name:"HMAC", hash:"SHA-256"}, false, ["sign"]);
+  const tag = new Uint8Array(await crypto.subtle.sign("HMAC", hk, join(iv, ct)));
+  return {salt: b64(salt), iv: b64(iv), tag: b64(tag), ct: b64(ct), iterations};
+}
+
+async function unseal(S, pass){
+  const {encKey, macKey} = await keys(pass, unb64(S.salt), S.iterations);
+  const iv = unb64(S.iv), ct = unb64(S.ct), tag = unb64(S.tag);
+  const hk = await crypto.subtle.importKey("raw", macKey, {name:"HMAC", hash:"SHA-256"}, false, ["verify"]);
+  if (!(await crypto.subtle.verify("HMAC", hk, tag, join(iv, ct)))) throw new Error("wrong passphrase");
+  const ak = await crypto.subtle.importKey("raw", encKey, {name:"AES-CBC"}, false, ["decrypt"]);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-CBC", iv}, ak, ct));
+}
+
+function block(S){
+  return 'const SEAL = {\n' +
+         '  salt: "' + S.salt + '",\n' +
+         '  iv:   "' + S.iv   + '",\n' +
+         '  tag:  "' + S.tag  + '",\n' +
+         '  iterations: ' + S.iterations + ',\n' +
+         '  ct:   "' + S.ct   + '"\n' +
+         '};';
+}
+
+function say(text, cls){ const s = $("#state"); s.className = "state " + (cls||""); s.textContent = text; }
+
+$("#seal").addEventListener("click", async () => {
+  const plain = $("#plain").value.trim();
+  const pass  = $("#pass").value;
+  const iter  = parseInt($("#iter").value, 10);
+  if (!plain) return say("Nothing to seal.", "err");
+  if (!pass)  return say("Choose a passphrase.", "err");
+  if (!(iter >= 100000)) return say("Use at least 100 000 iterations.", "err");
+  say("deriving key…");
+  $("#seal").disabled = true;
+  try {
+    last = await seal(plain, pass, iter);
+    $("#out").hidden = false;
+    $("#out").textContent = block(last);
+    $("#copy").disabled = false; $("#verify").disabled = false;
+    say("Sealed " + plain.length + " characters.", "ok");
+  } catch (e) {
+    say("Failed: " + e.message, "err");
+  } finally {
+    $("#seal").disabled = false;
+  }
+});
+
+$("#copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(block(last)); say("Copied.", "ok"); }
+  catch { say("Copy failed — select the text below instead.", "err"); }
+});
+
+$("#verify").addEventListener("click", async () => {
+  say("checking…");
+  try {
+    const back = await unseal(last, $("#pass").value);
+    const same = back === $("#plain").value.trim();
+    say(same ? "Round trip OK — it unseals to exactly the plaintext." : "Round trip MISMATCH — do not use this.", same ? "ok" : "err");
+  } catch (e) {
+    say("Round trip failed: " + e.message, "err");
+  }
+});
+
+if (!(window.crypto && crypto.subtle)) say("This browser has no Web Crypto.", "err");
+</script>
+</body>
+</html>

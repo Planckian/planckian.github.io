@@ -1,36 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Planckian Documentation</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Documentation — Planckian</title>
+<meta name="description" content="Documentation for Planckian's open software and research: the ArchBuilder API reference, the Zhivago simulation backend, and the tutorials behind the architectures.">
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-  <div class="container">
-    <aside class="sidebar">
-      <img src="logo.png" alt="Planckian Logo" class="logo" />
-      <nav>
-        <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="https://github.com/planckianq" target="_blank">GitHub Projects</a></li>
-        </ul>
-      </nav>
-    </aside>
+<a class="skip" href="#main">Skip to content</a>
 
-    <main class="content">
-      <h1>Documentation</h1>
-      <p>Welcome to Planckian's documentation page. We will add technical documentation on this page.</p>
-    </main>
+<div class="top">
+  <a class="brand" href="index.html"><img src="assets/logo.png" alt="Planckian"><span class="div"></span><span class="kicker">Planckian srl</span></a>
+  <span class="sp"></span>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="architectures.html">Research</a>
+    <a href="software.html">Software</a>
+    <a href="docs.html" aria-current="page">Docs</a>
+    <a href="papers.html">Papers</a>
+    <a href="games.html">Demos</a>
+  </nav>
+  <a class="btn primary" href="https://github.com/planckianq" target="_blank" rel="noopener">GitHub ↗</a>
+</div>
+
+<div class="sitebar">
+  This is Planckian's <b>open-source and research</b> site, hosted on GitHub Pages — software, papers and interactive demos.
+  The company website is <a href="https://www.planckian.co" target="_blank" rel="noopener">planckian.co&nbsp;↗</a>.
+</div>
+
+<main id="main">
+
+  <section class="wrap hero" style="padding-bottom:48px">
+    <p class="eyebrow">Documentation</p>
+    <h1>Everything we've<br><em>written down.</em></h1>
+    <p class="lede">
+      API references for the software, and the long-form tutorials that explain the physics the
+      software is built to design for.
+    </p>
+  </section>
+
+  <section class="wrap band">
+    <p class="eyebrow">Software reference</p>
+    <h2>API documentation</h2>
+    <div class="grid two" style="margin-top:26px">
+      <a class="card" href="ArchBuilder/index.html">
+        <span class="badge soon">v0.5 alpha</span>
+        <h3 style="margin-top:14px">ArchBuilder</h3>
+        <p class="small">
+          Full package and submodule reference for the design suite — ArchBuilder, AIgor, Bovary,
+          Frankenstein, Livingston and Steppenwolf, with the QuCAT circuit layer. Generated from
+          the source with Sphinx, searchable, with a module index.
+        </p>
+        <div class="chips" style="margin-top:14px">
+          <span class="chip">Python</span><span class="chip">Sphinx</span><span class="chip">searchable</span>
+        </div>
+        <span class="go">Open the reference <span class="arrow">→</span></span>
+      </a>
+      <a class="card" href="Zhivago/index.html">
+        <span class="badge live">Online</span>
+        <h3 style="margin-top:14px">Zhivago</h3>
+        <p class="small">
+          The Julia tensor-network simulation backend, built on ITensor. Runs standalone or as
+          ArchBuilder's large-system simulator. Documenter-generated, with light and dark themes.
+        </p>
+        <div class="chips" style="margin-top:14px">
+          <span class="chip">Julia</span><span class="chip">ITensor</span><span class="chip">Documenter.jl</span>
+        </div>
+        <span class="go">Open the reference <span class="arrow">→</span></span>
+      </a>
+    </div>
+    <p class="small" style="margin-top:20px">
+      Installation, requirements and licensing for both:
+      <a href="software.html">the software page →</a>
+    </p>
+  </section>
+
+  <section class="wrap band">
+    <p class="eyebrow">Long form</p>
+    <h2>Tutorials</h2>
+    <div class="grid two" style="margin-top:26px">
+      <a class="card" href="tutorial.html">
+        <p class="eyebrow dim">Six minutes</p>
+        <h3>A quantum computer with four control lines</h3>
+        <p class="small">
+          How switchable XY couplings and one addressable site add up to a universal machine whose
+          wire count does not grow with the register.
+        </p>
+        <span class="go">Read <span class="arrow">→</span></span>
+      </a>
+      <a class="card" href="tutorial-zz.html">
+        <p class="eyebrow dim">Seven minutes</p>
+        <h3>The coupling everyone else cancels</h3>
+        <p class="small">
+          Why an always-on ZZ interaction, made large enough, turns a parasitic effect into the
+          addressing mechanism — and what that costs.
+        </p>
+        <span class="go">Read <span class="arrow">→</span></span>
+      </a>
+    </div>
+    <p class="small" style="margin-top:20px">
+      The peer-reviewed and preprint versions, with QR codes:
+      <a href="papers.html">all seven papers →</a>
+    </p>
+  </section>
+
+  <section class="wrap band">
+    <p class="eyebrow">Hands on</p>
+    <h2>Interactive demos</h2>
+    <p class="lede">
+      Seven browser demos that let you drive the architectures directly (one passphrase-locked). No install, and they work
+      on a phone.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="games.html">Switchable XY — five demos</a>
+      <a class="btn" href="games-zz.html">Always-on ZZ — two demos</a>
+      <a class="btn" href="architectures.html">Both mechanisms compared</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <img src="assets/logo.png" alt="Planckian">
+        <p class="small" style="max-width:34ch">Scalable quantum computing architectures based on superconducting qubits.</p>
+      </div>
+      <div>
+        <h4>Research</h4>
+        <ul>
+          <li><a href="architectures.html">Both mechanisms</a></li>
+          <li><a href="papers.html">Papers</a></li>
+          <li><a href="tutorial.html">XY tutorial</a></li>
+          <li><a href="tutorial-zz.html">ZZ tutorial</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Demos</h4>
+        <ul>
+          <li><a href="games.html">Switchable XY</a></li>
+          <li><a href="games-zz.html">Always-on ZZ</a></li>
+          <li><a href="lab/viper.html">Viper (locked)</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Software</h4>
+        <ul>
+          <li><a href="software.html">ArchBuilder</a></li>
+          <li><a href="ArchBuilder/index.html">ArchBuilder API</a></li>
+          <li><a href="Zhivago/index.html">Zhivago</a></li>
+          <li><a href="https://github.com/planckianq" target="_blank" rel="noopener">GitHub ↗</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© Planckian srl</span><span>·</span>
+      <span>GitHub Pages site — the company website is</span><span>·</span>
+      <a href="https://www.planckian.co" target="_blank" rel="noopener">planckian.co</a><span>·</span>
+      <a href="mailto:hello@planckian.com">hello@planckian.com</a>
+    </div>
   </div>
-
-      <nav>
-        <ul>
-          <li><a href="planckianq.github.io" target="_blank">Back to home</a></li>
-
-        </ul>
-      </nav>
-  
+</footer>
 </body>
 </html>
-
