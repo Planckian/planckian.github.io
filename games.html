@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Global control — five things to play with — Planckian</title>
+<title>Global control — six things to play with — Planckian</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -41,7 +41,7 @@
   .grid{flex:1 1 auto;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:auto;gap:2vmin;align-items:stretch}
   .card.span2{grid-column:1/-1}
   @media(max-aspect-ratio:9/11){.grid{grid-template-columns:1fr}.card.span2{grid-column:auto}}
-  /* card 05 is unannounced: visible, but it opens a passphrase gate */
+  /* cards 05 and 06 are unannounced: visible, but they open a passphrase gate */
   .card.locked{border-style:dashed;border-color:var(--line2)}
   .card.locked:hover,.card.locked:focus-visible{border-color:var(--gold);background:#1a1d2c}
   .card.locked .num,.card.locked .play{color:var(--gold)}
@@ -114,8 +114,8 @@
   </div>
 
   <div class="hero">
-    <h1>A quantum computer with <em>four control lines</em>.<br>Five ways to see how it works.</h1>
-    <p class="sub">Each one is a short hands-on puzzle taken straight from the architecture — one bond, then a chain, then the ring itself, then the general question underneath all of them, then the logical qubits that ride on top. About a minute each. New to this? <a href="tutorial.html" style="color:var(--brand);font-weight:600">Read the six-minute tutorial first →</a></p>
+    <h1>A quantum computer with <em>four control lines</em>.<br>Six ways to see how it works.</h1>
+    <p class="sub">Each one is a short hands-on puzzle taken straight from the architecture — one bond, then a chain, then the ring itself, then the general question underneath all of them, then the logical qubits that ride on top, then a beta of where that goes next. About a minute each. New to this? <a href="tutorial.html" style="color:var(--brand);font-weight:600">Read the six-minute tutorial first →</a></p>
   </div>
 
   <div class="grid">
@@ -229,7 +229,7 @@
       </div>
     </a>
 
-    <a class="card span2 locked" href="lab/viper.html">
+    <a class="card locked" href="lab/viper.html">
       <div class="thumb">
         <svg viewBox="0 0 150 96">
           <g transform="translate(75,48)">
@@ -258,6 +258,37 @@
         <p>Interleave whole surface-code patches along the two belts. Now a shift by <i>d</i> seats permutes logical qubits rather than physical ones — and the patches themselves turn out to live on a small torus. Unannounced work, so this one asks for the passphrase first.</p>
         <span class="play">Unlock and play <span class="arrow">→</span></span>
         <div class="file">lab/viper.html</div>
+      </div>
+    </a>
+
+    <a class="card locked" href="lab/viper3_beta_sealed.html">
+      <div class="thumb">
+        <svg viewBox="0 0 150 96">
+          <g transform="translate(75,48)">
+            <ellipse cx="0" cy="0" rx="45" ry="27" fill="none" stroke="#2a2e42" stroke-width="15"/>
+            <g fill="none" stroke-width="5" stroke-linecap="round">
+              <path class="blink1" d="M 45 0 A 45 27 0 0 1 22.5 23.4" stroke="#fbbf24"/>
+              <path class="blink2" d="M 22.5 23.4 A 45 27 0 0 1 -22.5 23.4" stroke="#34d399"/>
+              <path class="blink3" d="M -22.5 23.4 A 45 27 0 0 1 -45 0" stroke="#a78bfa"/>
+              <path class="blink1" d="M -45 0 A 45 27 0 0 1 -22.5 -23.4" stroke="#fbbf24"/>
+              <path class="blink2" d="M -22.5 -23.4 A 45 27 0 0 1 22.5 -23.4" stroke="#34d399"/>
+              <path class="blink3" d="M 22.5 -23.4 A 45 27 0 0 1 45 0" stroke="#a78bfa"/>
+            </g>
+            <g fill="#141621" stroke="#3a3f59" stroke-width="2.5">
+              <circle cx="45" cy="0" r="6"/><circle cx="22.5" cy="23.4" r="6"/><circle cx="-22.5" cy="23.4" r="6"/>
+              <circle cx="-45" cy="0" r="6"/><circle cx="-22.5" cy="-23.4" r="6"/><circle cx="22.5" cy="-23.4" r="6"/>
+            </g>
+            <ellipse cx="0" cy="2" rx="17" ry="9" fill="#0f111a" stroke="#3a3f59" stroke-width="1.4"/>
+            <text x="0" y="6" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#fbbf24">β</text>
+          </g>
+        </svg>
+      </div>
+      <div>
+        <p class="num">06 · viper 3 · beta <span class="lock">🔒 passphrase</span></p>
+        <h2>Viper 3 (beta)</h2>
+        <p>The next iteration of the torus demo. Still in beta, so layouts and numbers may change between visits. Same passphrase as 05.</p>
+        <span class="play">Unlock and play <span class="arrow">→</span></span>
+        <div class="file">lab/viper3_beta_sealed.html</div>
       </div>
     </a>
 
