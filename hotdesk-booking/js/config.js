@@ -2,17 +2,10 @@
 // Lukewarm Desk Booking System — wired up to the live "Booking a table" /
 // "these desks are hot" form + its linked response Sheet.
 //
-// ⚠ ONE THING STILL NEEDED: add a 6th question to the live Google Form —
-// multiple choice, titled exactly "Action", with two options "Book" and
-// "Cancel" (not required). This powers the new "remove a booking" feature:
-// removing writes a new "Cancel" row instead of deleting anything, and the
-// site treats the MOST RECENT row per desk/date/slot as authoritative. Once
-// added, replace ENTRY_IDS.action below with its real entry.NNNNNN id (open
-// the form's viewform URL, run
-// `JSON.stringify(window.FB_PUBLIC_LOAD_DATA_)` in the console, and find
-// the "Action" question's id — or just send the form link and I'll do it).
-// Until then, removal will silently fail to submit (the Action field name
-// won't match anything on Google's end).
+// Removing a booking appends a row whose Name is "[cancelled] <name>", so it
+// works with the form's five existing questions. An optional "Action"
+// question (multiple choice: Book / Cancel) can be added later; put its
+// entry.NNNNNN id in ENTRY_IDS.action and the site fills it in as well.
 // ============================================================================
 const CONFIG = {
   // The Google Form's submit endpoint (…/viewform with "formResponse" swapped in).
@@ -28,8 +21,8 @@ const CONFIG = {
     date: "entry.1649304243", // "Date" (native date question — site expands
                                // this into _year/_month/_day fields itself,
                                // see dateFieldsForEntry() in app.js)
-    action: "entry.REPLACE_ME", // "Action" (Book / Cancel) — NOT YET ADDED,
-                                 // see the warning above.
+    action: null,             // optional "Action" (Book / Cancel) question —
+                               // not on the form; see the note above.
   },
 
   // CSV export of the response Sheet (works because the Sheet's current

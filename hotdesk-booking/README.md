@@ -9,37 +9,22 @@ The page is the only thing people interact with. Behind the scenes it uses a
 Google Form as the write path and a published Google Sheet (as CSV) as the read
 path — no server, no third-party account beyond Google, free.
 
-## ⚠ One setup step still needed: the "Action" question
+## 1. The Google Form (already set up)
 
-The form needs a 6th question added before booking removal will work:
-
-- **Type:** Multiple choice
-- **Title:** exactly `Action`
-- **Options:** `Book` and `Cancel`
-- **Required:** no
-
-This powers the "remove a booking" feature (see Notes below) — removing a
-name doesn't delete anything from the Sheet, it adds a new row with
-`Action = Cancel`, and the site treats the *most recent* row for a given
-desk/date/slot as the current truth. Until this question exists, attempting
-to remove a booking will submit but silently do nothing (the field name sent
-won't match any question on Google's end).
-
-Add it, then tell me (or paste the form's `viewform` link again) and I'll
-grab its real entry ID and finish wiring `js/config.js`.
-
-## 1. The Google Form (already set up, except Action above)
-
-The form ("Booking a table" / "these desks are hot") has 5 questions already:
+The form ("Booking a table" / "these desks are hot") has 5 questions:
 `Name` (short answer), `When` (multiple choice: Morning / Afternoon / Whole
 day), `Room` (multiple choice: Room A / Room B / Extra), `Date` (native date
-question), `Desk` (short answer, free text like `A2`, `B3`, `X1`) — plus the
-`Action` question described above. Nobody fills this form in directly — the
-site submits to it silently in the background.
+question), `Desk` (short answer, free text like `A2`, `B3`, `X1`). Nobody
+fills this form in directly — the site submits to it silently in the
+background. A removal is recorded as a row whose Name is
+`[cancelled] <name>` (see Notes below), so no extra question is needed.
 
-`js/config.js` already has the real `FORM_ACTION_URL` and the first 5
-`ENTRY_IDS` wired in; `ENTRY_IDS.action` is still a placeholder until the
-question above exists. If the form's questions are ever rebuilt from
+Optionally, a 6th multiple-choice question titled `Action` (options `Book`
+and `Cancel`, not required) can be added; put its entry ID in
+`ENTRY_IDS.action` in `js/config.js` and the site fills it in too.
+
+`js/config.js` has the real `FORM_ACTION_URL` and `ENTRY_IDS` wired in.
+If the form's questions are ever rebuilt from
 scratch, all the entry IDs will change — get new ones by opening the form's
 `viewform` URL, running `JSON.stringify(window.FB_PUBLIC_LOAD_DATA_)` in the
 browser console, and reading off each question's id from that structure (or
@@ -107,11 +92,17 @@ person).
   booking?" then "Sure sure it's you, *Name*? 😊 This can't be undone." —
   before anything is submitted. Under the hood this doesn't delete the
   Sheet row (the site has no write access beyond the Form); it appends a
-  new row for that same desk/date/slot with `Action = Cancel`. The site
-  always reads the *most recent* row per desk/date/slot as authoritative,
-  so a Cancel row after a Book row frees the slot again (`slotOccupant()` in
-  `js/app.js`). This means the Sheet keeps a full history rather than a
-  clean current-state table — that's expected, not a bug.
+  new row for that same desk/date/slot with Name `[cancelled] <name>`. The
+  site always reads the *most recent* row per desk/date/slot as
+  authoritative, so a cancel row after a booking row frees the slot again
+  (`slotOccupant()` in `js/app.js`). This means the Sheet keeps a full
+  history rather than a clean current-state table — that's expected, not a
+  bug. Before writing a booking or a removal the site re-reads the Sheet, so
+  a stale page can't book over someone or cancel a newer booking.
+- **Removals made before 2026-11-02** were recorded as plain duplicate
+  booking rows (the form never had the `Action` question the old code
+  relied on), so they don't count as removals. If someone shows up on a
+  desk they had removed, delete their row in the Sheet by hand.
 - **Date column parsing:** the `Date` question is Google's native date-picker
   type, so the Sheet shows it as locale-formatted text (e.g. `4/9/2026`)
   rather than ISO. The site parses this defensively (`parseSheetDateToIso` in

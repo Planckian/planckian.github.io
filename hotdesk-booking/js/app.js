@@ -47,8 +47,6 @@ function formRoomForDesk(deskId) {
   return room ? room.formRoom : "";
 }
 
-const PENDING_KEY = "hotdesk_pending_bookings_v1";
-
 // Add n business days to `base`, skipping Saturday/Sunday entirely — so from
 // a Friday, +1 lands on Monday and +2 lands on Tuesday.
 function addBusinessDays(base, n) {
@@ -191,68 +189,69 @@ function parseCSV(text) {
   });
 }
 
-// ---- pending (optimistic) bookings, kept in localStorage -----------------
+// ---- cancel rows ------------------------------------------------------------
+// A removal is written as a new row whose Name starts with CANCEL_PREFIX
+// (e.g. "[cancelled] Guido"). That works with the form as it is; if the form
+// ever gains an "Action" question (Book / Cancel) and ENTRY_IDS.action is set,
+// it's filled in too and either marker counts.
+const CANCEL_PREFIX = "[cancelled] ";
+
+function isCancelRow(r) {
+  return (r.Action || "").trim() === "Cancel" || (r.Name || "").startsWith(CANCEL_PREFIX);
+}
+
+// ---- pending (optimistic) bookings and cancellations ----------------------
+// Both live in one localStorage list of { kind: "Book" | "Cancel", desk,
+// when, date, name, ts, baseline }. `baseline` is how many Sheet rows (plus
+// still-pending local entries) existed for that desk/date/slot when it was
+// submitted; once the Sheet has more rows than that, our row has landed and
+// the overlay is dropped. Matching on the exact slot matters: matching on
+// desk+date alone dropped a new booking as soon as an older row (or the
+// other half-day) was already there, so the desk looked free again.
+const PENDING_KEY_V2 = "hotdesk_pending_v2";
+const PENDING_MAX_AGE_MS = 10 * 60 * 1000; // a failed submit can't block a desk forever
+
 function loadPending() {
   try {
-    const raw = localStorage.getItem(PENDING_KEY);
+    const raw = localStorage.getItem(PENDING_KEY_V2);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 function savePending(list) {
-  try { localStorage.setItem(PENDING_KEY, JSON.stringify(list)); } catch {}
+  try { localStorage.setItem(PENDING_KEY_V2, JSON.stringify(list)); } catch {}
 }
 function addPending(entry) {
   const list = loadPending();
   list.push(entry);
   savePending(list);
 }
+
+function slotRows(rows, desk, when, date) {
+  return rows.filter((r) => r.Desk === desk && r.When === when && sameDate(r.Date, date));
+}
+
 function prunePending(confirmedRows, forDate) {
   const list = loadPending().filter((p) => {
     if (p.date !== forDate) return true; // leave other days alone
-    const stillPending = !confirmedRows.some(
-      (r) => r.Desk === p.desk && sameDate(r.Date, p.date)
-    );
-    // also drop pending entries older than 10 minutes even if unconfirmed,
-    // so a failed submit doesn't block the desk forever
-    const tooOld = Date.now() - p.ts > 10 * 60 * 1000;
-    return stillPending && !tooOld;
+    const landed = slotRows(confirmedRows, p.desk, p.when, p.date).length > p.baseline;
+    const tooOld = Date.now() - p.ts > PENDING_MAX_AGE_MS;
+    return !landed && !tooOld;
   });
   savePending(list);
 }
 
-// ---- pending (optimistic) cancellations, kept in localStorage ------------
-// Mirrors the pending-bookings mechanism above, but for the removal side:
-// a "Cancel" row hasn't shown up in the Sheet yet, but the visitor who just
-// removed it shouldn't see it pop back as booked until the Sheet catches up.
-const PENDING_CANCELS_KEY = "hotdesk_pending_cancels_v1";
+// Baseline for a new local entry: rows already in the Sheet for that slot,
+// plus local entries still waiting to land there ahead of it.
+function pendingBaseline(rows, desk, when, date) {
+  const queued = loadPending().filter((p) => p.desk === desk && p.when === when && p.date === date);
+  return slotRows(rows, desk, when, date).length + queued.length;
+}
 
-function loadPendingCancels() {
-  try {
-    const raw = localStorage.getItem(PENDING_CANCELS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-function savePendingCancels(list) {
-  try { localStorage.setItem(PENDING_CANCELS_KEY, JSON.stringify(list)); } catch {}
-}
-function addPendingCancel(entry) {
-  const list = loadPendingCancels();
-  list.push(entry);
-  savePendingCancels(list);
-}
-function prunePendingCancels(confirmedRows, forDate) {
-  const list = loadPendingCancels().filter((c) => {
-    if (c.date !== forDate) return true;
-    // once the Sheet's own last row for this slot is itself a Cancel, our
-    // optimistic overlay is no longer needed
-    const matching = confirmedRows.filter((r) => r.Desk === c.desk && r.When === c.when && sameDate(r.Date, c.date));
-    const last = matching[matching.length - 1];
-    const confirmedByReal = last && (last.Action || "Book").trim() === "Cancel";
-    const tooOld = Date.now() - c.ts > 10 * 60 * 1000;
-    return !confirmedByReal && !tooOld;
-  });
-  savePendingCancels(list);
-}
+// Drop the pre-v2 pending lists; their entries expire within 10 minutes anyway.
+try {
+  localStorage.removeItem("hotdesk_pending_bookings_v1");
+  localStorage.removeItem("hotdesk_pending_cancels_v1");
+} catch {}
 
 // ---- data fetch ------------------------------------------------------------
 async function fetchBookings() {
@@ -266,28 +265,40 @@ async function fetchBookings() {
 // ---- rendering -------------------------------------------------------------
 
 // Who (if anyone) holds a given When-slot for a desk. The Sheet is an
-// append-only event log (Book / Cancel rows), so the MOST RECENT real row
-// for a slot is authoritative; a row with no "Action" value at all predates
-// the Cancel feature and is treated as "Book" for backward compatibility.
-// A pending local cancel can override a real "Book" (optimistic removal,
-// not yet reflected in the Sheet); a pending local booking only applies
-// when there's no real row at all (or the real history ends in a Cancel).
-function slotOccupant(deskRows, deskPending, deskPendingCancels, slotName) {
-  const matching = deskRows.filter((r) => r.When === slotName);
-  const last = matching[matching.length - 1];
-
-  if (last) {
-    const action = (last.Action || "Book").trim();
-    if (action !== "Cancel") {
-      const pendingCancel = deskPendingCancels.find((c) => c.when === slotName);
-      if (pendingCancel) return null; // removed locally, Sheet hasn't caught up yet
-      return { name: last.Name, pending: false };
-    }
+// append-only event log (booking rows and cancel rows), so the MOST RECENT
+// row for a slot is authoritative. Local pending entries are by construction
+// newer than every Sheet row (they're pruned once they land), so the newest
+// of those wins over the Sheet — a remove followed by a quick re-book shows
+// the re-booking, not a free desk.
+function slotOccupant(deskRows, deskPending, slotName) {
+  const local = deskPending.filter((p) => p.when === slotName);
+  const lastLocal = local[local.length - 1];
+  if (lastLocal) {
+    return lastLocal.kind === "Cancel" ? null : { name: lastLocal.name, pending: true };
   }
 
-  const pend = deskPending.find((p) => p.when === slotName);
-  if (pend) return { name: pend.name, pending: true };
+  const matching = deskRows.filter((r) => r.When === slotName);
+  const last = matching[matching.length - 1];
+  if (last && !isCancelRow(last)) return { name: last.Name, pending: false };
   return null;
+}
+
+// Whole day / Morning / Afternoon occupants for one desk on one date.
+function deskState(rows, pending, deskId, forDate) {
+  const deskRows = rows.filter((r) => r.Desk === deskId && sameDate(r.Date, forDate));
+  const deskPending = pending.filter((p) => p.desk === deskId && p.date === forDate);
+  return {
+    wholeDay: slotOccupant(deskRows, deskPending, "Whole day"),
+    morning: slotOccupant(deskRows, deskPending, "Morning"),
+    afternoon: slotOccupant(deskRows, deskPending, "Afternoon"),
+  };
+}
+
+// Whoever already holds something that a new `when` booking would overlap.
+function conflictFor(state, when) {
+  if (state.wholeDay) return state.wholeDay;
+  if (when === "Whole day") return state.morning || state.afternoon;
+  return when === "Morning" ? state.morning : state.afternoon;
 }
 
 function removeButtonHtml(desk, slotName, occupant) {
@@ -315,8 +326,7 @@ function renderHalf(desk, slotName, occupant) {
 }
 
 function render(rows, forDate) {
-  const pending = loadPending().filter((p) => p.date === forDate);
-  const pendingCancels = loadPendingCancels().filter((c) => c.date === forDate);
+  const pending = loadPending();
 
   for (const room of ROOMS) {
     const container = document.getElementById(room.elId);
@@ -336,13 +346,7 @@ function render(rows, forDate) {
         continue;
       }
 
-      const deskRows = rows.filter((r) => r.Desk === desk.id && sameDate(r.Date, forDate));
-      const deskPending = pending.filter((p) => p.desk === desk.id);
-      const deskPendingCancels = pendingCancels.filter((c) => c.desk === desk.id);
-
-      const wholeDay = slotOccupant(deskRows, deskPending, deskPendingCancels, "Whole day");
-      const morning = slotOccupant(deskRows, deskPending, deskPendingCancels, "Morning");
-      const afternoon = slotOccupant(deskRows, deskPending, deskPendingCancels, "Afternoon");
+      const { wholeDay, morning, afternoon } = deskState(rows, pending, desk.id, forDate);
 
       if (wholeDay) {
         // A whole-day booking (confirmed or pending) occupies both halves —
@@ -434,6 +438,20 @@ function submitToGoogleForm(fields) {
   });
 }
 
+// One Book or Cancel row. The Action field is only sent once the form really
+// has that question; a cancel is always marked via the Name prefix as well.
+function submitFormRow(desk, when, isoDay, name, action) {
+  const fields = {
+    [CONFIG.ENTRY_IDS.name]: action === "Cancel" ? CANCEL_PREFIX + name : name,
+    [CONFIG.ENTRY_IDS.desk]: desk,
+    [CONFIG.ENTRY_IDS.room]: formRoomForDesk(desk),
+    [CONFIG.ENTRY_IDS.when]: when,
+    ...dateFieldsForEntry(CONFIG.ENTRY_IDS.date, parseIsoLocal(isoDay)),
+  };
+  if (CONFIG.ENTRY_IDS.action) fields[CONFIG.ENTRY_IDS.action] = action;
+  return submitToGoogleForm(fields);
+}
+
 // ---- modal -----------------------------------------------------------------
 let activeDesk = null;
 let presetWhen = null; // set when booking a single free half of a split desk
@@ -482,21 +500,26 @@ async function confirmBooking() {
   if (!when) { errEl.textContent = "Please select Morning, Afternoon or Whole day."; return; }
 
   const forDate = getSelectedDateIso();
-  const forDateObj = parseIsoLocal(forDate);
   const confirmBtn = document.getElementById("confirmBtn");
   confirmBtn.disabled = true;
   confirmBtn.textContent = "Booking…";
 
   try {
-    await submitToGoogleForm({
-      [CONFIG.ENTRY_IDS.name]: name,
-      [CONFIG.ENTRY_IDS.desk]: activeDesk,
-      [CONFIG.ENTRY_IDS.room]: formRoomForDesk(activeDesk),
-      [CONFIG.ENTRY_IDS.when]: when,
-      [CONFIG.ENTRY_IDS.action]: "Book",
-      ...dateFieldsForEntry(CONFIG.ENTRY_IDS.date, forDateObj),
-    });
-    addPending({ desk: activeDesk, name, when, date: forDate, ts: Date.now() });
+    // Re-read the Sheet first: the board may be up to a minute old, and
+    // booking over someone who just took the desk is how double-bookings
+    // happened.
+    const rows = await fetchBookings();
+    prunePending(rows, forDate);
+    const taken = conflictFor(deskState(rows, loadPending(), activeDesk, forDate), when);
+    if (taken) {
+      errEl.textContent = `Sorry — ${taken.name} has just booked this desk. The board has been refreshed.`;
+      render(rows, forDate);
+      return;
+    }
+
+    const baseline = pendingBaseline(rows, activeDesk, when, forDate);
+    await submitFormRow(activeDesk, when, forDate, name, "Book");
+    addPending({ kind: "Book", desk: activeDesk, name, when, date: forDate, ts: Date.now(), baseline });
     closeModal();
     setStatus("Booking sent — refreshing…");
     await refresh();
@@ -550,24 +573,30 @@ async function confirmRemove() {
     return;
   }
 
-  const { desk, when } = removeTarget;
+  const { desk, when, name } = removeTarget;
   const forDate = getSelectedDateIso();
-  const forDateObj = parseIsoLocal(forDate);
   const errEl = document.getElementById("removeModalError");
   const confirmBtn = document.getElementById("removeConfirmBtn");
   confirmBtn.disabled = true;
   confirmBtn.textContent = "Removing…";
 
   try {
-    await submitToGoogleForm({
-      [CONFIG.ENTRY_IDS.name]: removeTarget.name,
-      [CONFIG.ENTRY_IDS.desk]: desk,
-      [CONFIG.ENTRY_IDS.room]: formRoomForDesk(desk),
-      [CONFIG.ENTRY_IDS.when]: when,
-      [CONFIG.ENTRY_IDS.action]: "Cancel",
-      ...dateFieldsForEntry(CONFIG.ENTRY_IDS.date, forDateObj),
-    });
-    addPendingCancel({ desk, when, date: forDate, ts: Date.now() });
+    // Only cancel if that booking is still the one holding the slot —
+    // otherwise a stale board could cancel someone else's newer booking.
+    const rows = await fetchBookings();
+    prunePending(rows, forDate);
+    const state = deskState(rows, loadPending(), desk, forDate);
+    const holder = { "Whole day": state.wholeDay, Morning: state.morning, Afternoon: state.afternoon }[when];
+    if (!holder || holder.name !== name) {
+      closeRemoveModal();
+      setStatus("That booking had already changed — board refreshed.");
+      render(rows, forDate);
+      return;
+    }
+
+    const baseline = pendingBaseline(rows, desk, when, forDate);
+    await submitFormRow(desk, when, forDate, name, "Cancel");
+    addPending({ kind: "Cancel", desk, name, when, date: forDate, ts: Date.now(), baseline });
     closeRemoveModal();
     setStatus("Removal sent — refreshing…");
     await refresh();
@@ -626,7 +655,6 @@ async function refresh() {
   try {
     const rows = await fetchBookings();
     prunePending(rows, forDate);
-    prunePendingCancels(rows, forDate);
     render(rows, forDate);
     setStatus("Up to date · " + new Date().toLocaleTimeString());
   } catch (e) {
